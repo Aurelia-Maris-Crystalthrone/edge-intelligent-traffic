@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城市功能区智能分析平台 | 边缘智能应用挑战赛</title>
+    <link rel="stylesheet" href="static/style.css">
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: 'bebb398cc520664a53327fec85caf582', 
+        };
+    </script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=6a39c425bcd9f2ff13fb1485a2d04b0e"></script>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div class="control-panel">
+        <h2>🏙️ 城市功能区分析</h2>
+        <div class="upload-area">
+            <label for="imageUpload" class="upload-btn">📤 上传卫星图切片</label>
+            <input type="file" id="imageUpload" accept="image/*" style="display:none;">
+            <button id="analyzeBtn" class="analyze-btn">🔍 开始分析</button>
+        </div>
+        <div id="result" class="result-box">
+            <p>等待分析...</p>
+        </div>
+        <div class="legend">
+            <h3>功能区图例</h3>
+            <div><span class="color-dot" style="background:#FF4B4B;"></span> 商业区</div>
+            <div><span class="color-dot" style="background:#4B8BFF;"></span> 居民区</div>
+            <div><span class="color-dot" style="background:#FFB84B;"></span> 工业区</div>
+            <div><span class="color-dot" style="background:#4BFF4B;"></span> 绿地/公园</div>
+        </div>
+    </div>
+
+    <script src="static/script.js"></script>
+</body>
+</html>

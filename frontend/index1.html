@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城市功能区智能分析平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        #container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 10;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .control-panel h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 1.4rem;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .upload-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .upload-btn, .analyze-btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .upload-btn {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+        }
+        .analyze-btn {
+            background-color: #3498db;
+            color: white;
+            box-shadow: 0 2px 5px rgba(52,152,219,0.3);
+        }
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+        .legend {
+            margin-top: 15px;
+        }
+        .legend h3 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .legend div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        .color-dot {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+    </style>
+    <!-- 使用 JS API 1.4.15 避免安全密钥问题 -->
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=6a39c425bcd9f2ff13fb1485a2d04b0e"></script>
+</head>
+<body>
+    <div id="container"></div>
+    <div class="control-panel">
+        <h2>🏙️ 城市功能区分析</h2>
+        <div class="upload-area">
+            <label for="imageUpload" class="upload-btn">📤 上传卫星图切片</label>
+            <input type="file" id="imageUpload" accept="image/*" style="display:none;">
+            <button id="analyzeBtn" class="analyze-btn">🔍 开始分析</button>
+        </div>
+        <div id="result" class="result-box">
+            <p>等待分析...</p>
+        </div>
+        <div class="legend">
+            <h3>功能区图例</h3>
+            <div><span class="color-dot" style="background:#FF4B4B;"></span> 商业区</div>
+            <div><span class="color-dot" style="background:#4B8BFF;"></span> 居民区</div>
+            <div><span class="color-dot" style="background:#FFB84B;"></span> 工业区</div>
+            <div><span class="color-dot" style="background:#4BFF4B;"></span> 绿地/公园</div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化地图 (1.4.15 版本)
+        var map = new AMap.Map('container', {
+            zoom: 4,
+            center: [116.397428, 39.90923],
+            viewMode: '2D',   // 1.4 版本不支持 3D，改为 2D
+            mapStyle: 'amap://styles/dark'
+        });
+
+        // 添加控件
+        map.addControl(new AMap.Scale());
+        map.addControl(new AMap.ToolBar({ position: 'LT' }));
+
+        // 示例标记点（简化）
+        var markers = [];
+        var demoPoints = [
+            { lnglat: [116.404, 39.915], name: '天安门广场', type: '绿地/公园' },
+            { lnglat: [116.484, 39.923], name: '北京CBD', type: '商业区' },
+            { lnglat: [121.473, 31.230], name: '上海陆家嘴', type: '商业区' },
+            { lnglat: [113.264, 23.129], name: '广州珠江新城', type: '商业区' }
+        ];
+        var typeColor = {
+            '商业区': '#FF4B4B',
+            '居民区': '#4B8BFF',
+            '工业区': '#FFB84B',
+            '绿地/公园': '#4BFF4B'
+        };
+        demoPoints.forEach(function(point) {
+            var marker = new AMap.Marker({
+                position: point.lnglat,
+                title: point.name,
+                label: {
+                    content: '<div style="background:' + typeColor[point.type] + '; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">' + point.type + '</div>',
+                    offset: new AMap.Pixel(10, -20)
+                }
+            });
+            map.add(marker);
+            markers.push(marker);
+        });
+
+        // 上传与分析逻辑（保持与你原有逻辑一致，但注意后端地址）
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                document.querySelector('.upload-btn').textContent = file.name;
+            }
+        });
+        document.querySelector('.upload-btn').addEventListener('click', function() {
+            document.getElementById('imageUpload').click();
+        });
+        document.getElementById('analyzeBtn').addEventListener('click', function() {
+            var fileInput = document.getElementById('imageUpload');
+            var file = fileInput.files[0];
+            if (!file) {
+                alert('请先选择一张卫星图像切片');
+                return;
+            }
+            var resultBox = document.getElementById('result');
+            resultBox.innerHTML = '<p>正在分析中，请稍候...</p>';
+            var formData = new FormData();
+            formData.append('image', file);
+            fetch('http://localhost:5000/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(function(response) {
+                if (!response.ok) throw new Error('网络响应异常');
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.error) {
+                    resultBox.innerHTML = '<p style="color:red;">错误: ' + data.error + '</p>';
+                    return;
+                }
+                var confidencePercent = (data.confidence * 100).toFixed(1);
+                resultBox.innerHTML = `
+                    <p><strong>功能区类别：</strong>${data.class}</p>
+                    <p><strong>置信度：</strong>${confidencePercent}%</p>
+                    <p><small>分析时间：${new Date().toLocaleTimeString()}</small></p>
+                `;
+                var center = map.getCenter();
+                var marker = new AMap.Marker({
+                    position: [center.lng + (Math.random() - 0.5) * 0.5, center.lat + (Math.random() - 0.5) * 0.5],
+                    title: '分析结果: ' + data.class,
+                    label: {
+                        content: '<div style="background:' + typeColor[data.class] + '; color:white; padding:4px 8px; border-radius:12px; font-size:12px;">' + data.class + ' ' + confidencePercent + '%</div>',
+                        offset: new AMap.Pixel(15, -25)
+                    }
+                });
+                map.add(marker);
+                markers.push(marker);
+                map.setCenter(marker.getPosition());
+                map.setZoom(14);
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                resultBox.innerHTML = '<p style="color:red;">分析失败，请检查后端服务是否启动。</p>';
+            });
+        });
+    </script>
+</body>
+</html>
