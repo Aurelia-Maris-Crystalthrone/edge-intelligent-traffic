@@ -157,8 +157,9 @@ python edge_infer.py /path/to/your_test_image.jpg
 *   **Q：如何更换为自己的数据集？**
     *   A：修改 `train.py` 中的 `data_dir` 路径，并确保图片按类别文件夹组织。
 
-## 五、提交材料清单（初赛）
+## 五. 贡献与许可
 
-*   **数据集**：可提供示例数据集或说明来源。
-*   **模型构建源码**：`backend/model/` 目录。
-*   **作品源码**：全部项目文件。
+- **维护者**: [Aurelia-Maris-Crystalthrone]
+- **联系方式**: [3792458256@qq.com]
+- **内容详见**：[链接: https://pan.baidu.com/s/1NH2HQ8EFruwU4z2FoFaJyw 提取码: g8a9]
+- **许可证**: 本项目代码遵循 MIT 协议。请注意，部分依赖项（如 Navigation 2）可能有其自身的许可条款。
