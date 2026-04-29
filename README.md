@@ -162,4 +162,3 @@ python edge_infer.py /path/to/your_test_image.jpg
 - **维护者**: [Aurelia-Maris-Crystalthrone]
 - **联系方式**: [3792458256@qq.com]
 - **内容详见**：[链接: https://pan.baidu.com/s/1NH2HQ8EFruwU4z2FoFaJyw 提取码: g8a9]
-- **许可证**: 本项目代码遵循 MIT 协议。请注意，部分依赖项（如 Navigation 2）可能有其自身的许可条款。
