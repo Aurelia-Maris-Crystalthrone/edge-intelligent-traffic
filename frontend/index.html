@@ -5,14 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>城市功能区智能分析平台 | 边缘智能应用挑战赛</title>
     <link rel="stylesheet" href="static/style.css">
-    <script type="text/javascript">
-        window._AMapSecurityConfig = {
-            securityJsCode: 'bebb398cc520664a53327fec85caf582', 
+
+    <!-- 高德地图 Key 不再硬编码在本文件中。
+         请复制 static/config.example.js 为 static/config.js 并填入自己的 Key。
+         config.js 已加入 .gitignore，不会被提交。 -->
+    <script src="static/config.js" onerror="window.__AMAP_CONFIG_MISSING__ = true;"></script>
+    <script>
+    (function () {
+        function warn(html) {
+            var show = function () {
+                var box = document.getElementById('map-warning');
+                if (box) { box.innerHTML = html; box.style.display = 'block'; }
+            };
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', show);
+            } else {
+                show();
+            }
+        }
+
+        var cfg = window.AMAP_CONFIG || {};
+        if (!cfg.key) {
+            window.__AMAP_CONFIG_MISSING__ = true;
+            warn('<strong>未配置高德地图 Key</strong>：请复制 <code>static/config.example.js</code> ' +
+                 '为 <code>static/config.js</code> 并填入自己的 Key，然后刷新页面。' +
+                 '（地图功能不可用，图像分析不受影响）');
+            return;
+        }
+
+        if (cfg.securityJsCode) {
+            window._AMapSecurityConfig = { securityJsCode: cfg.securityJsCode };
+        }
+
+        var s = document.createElement('script');
+        s.src = 'https://webapi.amap.com/maps?v=2.0&key=' + encodeURIComponent(cfg.key);
+        s.onerror = function () {
+            warn('<strong>高德地图脚本加载失败</strong>：请检查网络连接或 Key 是否有效。');
         };
+        s.onload = function () {
+            if (typeof window.initAMapApp === 'function') { window.initAMapApp(); }
+        };
+        document.head.appendChild(s);
+    })();
     </script>
-    <script src="https://webapi.amap.com/maps?v=2.0&key=6a39c425bcd9f2ff13fb1485a2d04b0e"></script>
 </head>
 <body>
+    <div id="map-warning" class="map-warning" style="display:none;"></div>
     <div id="container"></div>
     
     <div class="control-panel">
@@ -34,6 +72,7 @@
         </div>
     </div>
 
-    <script src="static/script.js"></script>
+    <!-- 文件名是 scripts.js（带 s）。旧版本误引用为 script.js，导致整份交互逻辑 404。 -->
+    <script src="static/scripts.js"></script>
 </body>
 </html>

@@ -119,3 +119,24 @@ body, html {
     border-radius: 50%;
     margin-right: 8px;
 }
+
+/* 未配置高德地图 Key / 地图脚本加载失败时的提示条 */
+.map-warning {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 12px 18px;
+    background: #fff3cd;
+    color: #664d03;
+    border-bottom: 1px solid #ffecb5;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.map-warning code {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 1px 5px;
+    border-radius: 3px;
+}

@@ -10,17 +10,42 @@ import sys
 import time
 import os
 
-CLASS_NAMES = ["商业区", "居民区", "工业区", "绿地/公园"]
+# 类别顺序必须与 ImageFolder 的索引一致。
+#
+# scripts/organize_dataset.py 输出的是英文目录名 commercial / green /
+# industrial / residential，ImageFolder 按字母序分配索引，因此对应关系为：
+#     0 -> commercial  -> 商业区
+#     1 -> green       -> 绿地/公园
+#     2 -> industrial  -> 工业区
+#     3 -> residential -> 居民区
+#
+# 修改此处必须同步修改 backend/app.py 的 CLASS_NAMES，
+# 否则模型输出会被映射成错误的类别。
+CLASS_NAMES = ["商业区", "绿地/公园", "工业区", "居民区"]
 
-def load_quantized_model(model_path="model_quantized.pt"):
-    if not os.path.exists(model_path):
-        model_path = "city_function_model_scripted.pt"
-    if not os.path.exists(model_path):
-        raise FileNotFoundError("未找到量化模型文件，请先运行 quantize.py")
-    
-    model = torch.jit.load(model_path)
-    model.eval()
-    return model
+# 模型文件按优先级尝试（相对本脚本所在目录解析，避免依赖当前工作目录）
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_CANDIDATES = [
+    os.path.join(BASE_DIR, "model_quantized.pt"),
+    os.path.join(BASE_DIR, "city_function_model_scripted.pt"),
+]
+
+
+def load_quantized_model(model_path=None):
+    """加载量化模型。model_path 为空时按 MODEL_CANDIDATES 依次尝试。"""
+    candidates = [model_path] if model_path else MODEL_CANDIDATES
+
+    for path in candidates:
+        if path and os.path.exists(path) and os.path.getsize(path) > 0:
+            model = torch.jit.load(path, map_location="cpu")
+            model.eval()
+            print(f"已加载模型：{path}")
+            return model
+
+    raise FileNotFoundError(
+        "未找到量化模型文件（已尝试：{}），请先运行 quantize.py 生成，"
+        "或用 --model 参数指定路径。".format(", ".join(str(c) for c in candidates))
+    )
 
 def preprocess_image(image_path):
     transform = transforms.Compose([
@@ -40,22 +65,34 @@ def infer(model, image_tensor):
         conf, pred = torch.max(probabilities, 1)
     return pred.item(), conf.item(), probabilities[0].tolist(), inference_time
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python edge_infer.py <image_path>")
-        sys.exit(1)
-    
-    image_path = sys.argv[1]
-    
+def main(argv=None):
+    import argparse
+
+    parser = argparse.ArgumentParser(description="边缘端遥感图像功能区推理")
+    parser.add_argument("image", help="待推理的卫星图像切片路径")
+    parser.add_argument(
+        "--model",
+        help="模型文件路径；不指定时按默认候选路径依次查找",
+    )
+    args = parser.parse_args(argv)
+
+    if not os.path.exists(args.image):
+        print(f"❌ 图像文件不存在：{args.image}")
+        return 1
+
     print("Loading quantized model...")
-    model = load_quantized_model()
-    
+    try:
+        model = load_quantized_model(args.model)
+    except FileNotFoundError as exc:
+        print(f"❌ {exc}")
+        return 1
+
     print("Preprocessing image...")
-    img_tensor = preprocess_image(image_path)
-    
+    img_tensor = preprocess_image(args.image)
+
     print("Running inference...")
     pred_idx, confidence, all_probs, inf_time = infer(model, img_tensor)
-    
+
     print("\n===== 推理结果 =====")
     print(f"功能区类别: {CLASS_NAMES[pred_idx]}")
     print(f"置信度: {confidence:.4f}")
@@ -64,3 +101,8 @@ if __name__ == "__main__":
     for i, cls in enumerate(CLASS_NAMES):
         print(f"  {cls}: {all_probs[i]:.4f}")
     print("====================")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

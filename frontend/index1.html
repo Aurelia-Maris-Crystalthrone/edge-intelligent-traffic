@@ -101,8 +101,27 @@
             margin-right: 8px;
         }
     </style>
-    <!-- 使用 JS API 1.4.15 避免安全密钥问题 -->
-    <script src="https://webapi.amap.com/maps?v=1.4.15&key=6a39c425bcd9f2ff13fb1485a2d04b0e"></script>
+    <!--
+        早期原型版本：使用 JS API 1.4.15 规避安全密钥校验，样式与脚本全部内联。
+        正式版本请改用根目录的 frontend/index.html（高德 v2.0 + 外链资源）。
+
+        Key 不再硬编码：请复制 static/config.example.js 为 static/config.js 并填入自己的 Key。
+    -->
+    <script src="static/config.js"></script>
+    <script>
+        (function () {
+            var cfg = window.AMAP_CONFIG || {};
+            var key = cfg.key && cfg.key !== 'YOUR_AMAP_KEY_HERE' ? cfg.key : '';
+            if (!key) {
+                console.error('未配置高德地图 Key，请复制 static/config.example.js 为 static/config.js');
+                return;
+            }
+            document.write(
+                '<script src="https://webapi.amap.com/maps?v=1.4.15&key=' +
+                encodeURIComponent(key) + '"><\/script>'
+            );
+        })();
+    </script>
 </head>
 <body>
     <div id="container"></div>

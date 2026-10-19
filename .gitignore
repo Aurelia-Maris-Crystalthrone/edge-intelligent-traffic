@@ -1,0 +1,40 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+venv/
+venv_clean/
+.venv/
+env/
+
+# ---- 密钥与本地配置（重要：不要提交真实 Key）----
+frontend/static/config.js
+.env
+*.pem
+
+# ---- 后端运行时 ----
+backend/venv/
+backend/model/*.pth
+backend/model/*.pt
+backend/dataset/
+backend/__pycache__/
+
+# ---- 模型权重（体积大，改用 Git LFS 或外部下载）----
+*.pth
+*.pt
+*.onnx
+*.weights
+
+# ---- 数据与中间产物 ----
+*.tif
+*.log
+processed.tif
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
